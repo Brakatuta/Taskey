@@ -1,3 +1,5 @@
+# Das hier ist ein Beispiel Programm um zu verdeutlichen, was im Hintergrund passiert.
+
 # Import einer geeigneten UI Library
 # ermöglicht das erstellen von Fenstern, Buttons, Slidern und anderen standard Window GUI Elementen
 import tkinter as tk
@@ -27,10 +29,10 @@ class RecorderApp:
         # Hilfsparameter
         self.recording = False
         self.playing = False
-        self.events = []
+        self.events = [] # hier werden Events wärend des Aufnahmeprozesses temporär gespeichert (im Arbeitsspeicher)
         self.start_time = 0
 
-        # UI
+        # Bauen der Oberfläche
         tk.Label(root, text="F10 zum Stoppen der Aufnahme", fg="blue").pack(pady=5)
         
         self.btn_record = tk.Button(root, text="Aufnahme Starten", command=self.toggle_record, bg="green", fg="white", height=2)
@@ -45,27 +47,39 @@ class RecorderApp:
         self.btn_load = tk.Button(root, text="Laden", command=self.load_from_file)
         self.btn_load.pack(side="right", padx=20, pady=10)
 
+    # wird ausgeführt sobald Button "Aufnahme starten" gedrückt wird (self.btn_record)
     def toggle_record(self):
+        # nur Aufnehmen wen Aufnahme flag auf false steht ansonsten Aufnahme beenden; siehe Anweisung nach else:
         if not self.recording:
+            # Eventuell zwichengespeicherte Events löschen
             self.events = []
+
+            # Flags setzen
             self.recording = True
             self.start_time = time.time()
+            # Dem user signalisieren das die Aufnahme begonnen hat
             self.btn_record.config(text="AUFNAHME LÄUFT... (F10 drücken)", bg="red")
             
-            # Listener starten
+            # Aufnahme intialisieren
             self.mouse_listener = mouse.Listener(on_click=self.on_click)
             self.key_listener = keyboard.Listener(on_press=self.on_press)
+            # Aufnahme starten
             self.mouse_listener.start()
             self.key_listener.start()
         else:
             self.stop_recording_logic()
 
+     # Aufnahme beenden
     def stop_recording_logic(self):
         self.recording = False
+        # Aufnahme Module stoppen
         if hasattr(self, 'mouse_listener'): self.mouse_listener.stop()
         if hasattr(self, 'key_listener'): self.key_listener.stop()
+        # Toggle Button zurücksetzten
         self.btn_record.config(text="Aufnahme Starten", bg="green")
 
+    # Die Position des Maus-Clicks (Bildschirm Koordinaten in Pixeln (x, y)),
+    #den Zeitpunkt, sowie die Art des Clicks bestimmen und zur Aufnahme Liste hinzufügen
     def on_click(self, x, y, button, pressed):
         if pressed and self.recording:
             self.events.append({
@@ -74,33 +88,44 @@ class RecorderApp:
                 'x': x, 'y': y, 'button': str(button)
             })
 
+    # Nimmt Key-Inputs auf sofern erlaubt
     def on_press(self, key):
+         # Nur reagieren wenn Aufnahme läuft, ansonsten nichts tun
         if not self.recording: return
 
         # GLOBALER STOPP-HOTKEY: F10
+        # Damit wird die Aufnahme sofort beendet
         if key == keyboard.Key.f10:
+            # Aufnahme beenden und nichts weiter tun
             self.stop_recording_logic()
             return
-
+            
+        # Taste ermitteln
         try:
             k = key.char
         except AttributeError:
             k = str(key)
-            
+
+        # Taste und Zeitpunkt des Inputs zur Aufnahme Liste hinzufügen
         self.events.append({
             'type': 'key',
             'time': time.time() - self.start_time,
             'key': k
         })
 
+    # ausgewählte Aufnahme abspielen
     def play_recording(self):
         if not self.events:
+            # Vorgang abbrechen wenn keine Datei gewählt wurde
             messagebox.showwarning("Fehler", "Keine Daten vorhanden!")
             return
 
+        # Abspielen ermöglichen
         self.playing = True
-        
+
+        # Abspielen
         def run_playback():
+            # Controller Module für Maus und Tastatur zur Input-Emulation initialisieren
             mouse_ctrl = mouse.Controller()
             key_ctrl = keyboard.Controller()
             
@@ -108,8 +133,9 @@ class RecorderApp:
             def on_interrupt(key):
                 if key == keyboard.Key.esc:
                     self.playing = False
-                    return False # Stoppt den Listener
+                    return False # Stoppt den Listener und beendet Playback sofort
 
+            
             interrupt_listener = keyboard.Listener(on_press=on_interrupt)
             interrupt_listener.start()
 
