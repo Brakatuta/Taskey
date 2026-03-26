@@ -1,4 +1,11 @@
 # Das hier ist ein Beispiel Programm um zu verdeutlichen, was im Hintergrund passiert.
+# Es geht hier lediglich um die interne Funktionalität
+
+# Um den Datenschutzt-Richtlinien zu entsprechen, müsste man deutliche Indikatoren für das
+# Aufnehmen und Abspielen hinzufügen (z.B. über Info PopUps und unveränderlichen Info GUIS, 
+# welche in keinem Fall von anderen Programmen überlagert werden können)
+# Darüber hinaus müssen die Aufnahme Dateien verschlüsselt werden
+# Usw...
 
 # Import einer geeigneten UI Library
 # ermöglicht das erstellen von Fenstern, Buttons, Slidern und anderen standard Window GUI Elementen
