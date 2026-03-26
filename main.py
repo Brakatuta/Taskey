@@ -135,20 +135,22 @@ class RecorderApp:
                     self.playing = False
                     return False # Stoppt den Listener und beendet Playback sofort
 
-            
+            # Verbindet den Beendigungsvorgang mit dem Escape Key
             interrupt_listener = keyboard.Listener(on_press=on_interrupt)
             interrupt_listener.start()
 
             last_time = 0
             for event in self.events:
-                if not self.playing: break # Not-Aus Check
-                
+                if not self.playing: break # weiterer Not-Aus Check
+
+                # Die Zeit die zwischen den einzelnen Aktionen gewartet wird
                 time.sleep(max(0, event['time'] - last_time))
                 last_time = event['time']
 
+                 # Abspielen der Aufgenommenen Input-Events unter berücksichtigungs des jeweiligen Types (Maus, Keyboard)
                 if event['type'] == 'mouse':
                     mouse_ctrl.position = (event['x'], event['y'])
-                    # Wir simulieren hier einen einfachen Klick
+                    # Simulieren einen einfachen Clicks (Rechts- bzw. Links-Click je nach Typ)
                     btn = mouse.Button.left if 'left' in event['button'] else mouse.Button.right
                     mouse_ctrl.click(btn)
                 elif event['type'] == 'key':
@@ -156,25 +158,32 @@ class RecorderApp:
                     if "Key." in key_val:
                         key_val = getattr(keyboard.Key, key_val.split('.')[1])
                     try:
+                        # Simulieren des Drückens einer Keyboard-Taste
                         key_ctrl.press(key_val)
                         key_ctrl.release(key_val)
                     except: pass
-            
+
+            # Abspielen beenden
             self.playing = False
             interrupt_listener.stop()
 
+        # Das ganze Playback in einem seperaten Thread ausführen, damit die Steuerung der Oberfläche weiter möglich ist
+        # und es zu keinen Blockaden wärend des Ausführens kommt
         threading.Thread(target=run_playback, daemon=True).start()
 
+    # Den Nutzer fragen, wo er die die Aufnahme speichern möchte
     def save_to_file(self):
         path = filedialog.asksaveasfilename(defaultextension=".json")
         if path:
             with open(path, 'w') as f: json.dump(self.events, f)
 
+    # DEn Nutzer fragen, welche Aufnahme er abspielen möchte
     def load_from_file(self):
         path = filedialog.askopenfilename()
         if path:
             with open(path, 'r') as f: self.events = json.load(f)
 
+# Das Programm als GUI-App starten
 if __name__ == "__main__":
     root = tk.Tk()
     app = RecorderApp(root)
